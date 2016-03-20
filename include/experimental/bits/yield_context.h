@@ -122,6 +122,7 @@ struct __yield_context_handler
     : _M_executor(__c._M_executor), _M_callee(__c._M_callee.lock()),
       _M_caller(__c._M_caller), _M_result(nullptr)
   {
+
   }
 
   executor_type get_executor() const noexcept
@@ -246,12 +247,6 @@ private:
   _Result _M_result;
 };
 
-template <class _Executor, class _R, class... _Args>
-struct handler_type<basic_yield_context<_Executor>, _R(_Args...)>
-{
-  typedef __yield_context_handler<_Executor, typename decay<_Args>::type...> type;
-};
-
 template <class _Executor, class _Func, class _Continuation, class... _Args>
 struct __yield_context_entry_point
 {
@@ -369,7 +364,7 @@ template <class _T>
 struct __is_yieldable<_T,
   typename enable_if<is_convertible<__last_argument_t<__signature_t<_T>>,
     yield_context>::value>::type> : true_type {};
-
+/*
 template <class _Func, class _R, class... _Args>
 struct handler_type<_Func, _R(_Args...),
   typename enable_if<__is_yieldable<typename decay<_Func>::type>::value
@@ -379,6 +374,12 @@ struct handler_type<_Func, _R(_Args...),
   typedef __last_argument_t<__signature_t<_DecayFunc>> _YieldContext;
   typedef associated_executor_t<_YieldContext> _Executor;
   typedef __yield_context_launcher<_Executor, _DecayFunc> type;
+};
+*/
+template <class _Executor, class _R, class... _Args>
+struct handler_type<basic_yield_context<_Executor>, _R(_Args...)>
+{
+    typedef __yield_context_handler<_Executor, typename decay<_Args>::type...> type;
 };
 
 template <class _Executor, class _Func, class... _Args>

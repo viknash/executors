@@ -266,6 +266,9 @@ private:
   std::vector<__heap_entry> _M_heap;
 };
 
+#pragma warning(push)
+#pragma warning(disable: 6011)
+
 class __timer_queue_set
 {
 public:
@@ -332,6 +335,8 @@ public:
 private:
   __timer_queue_base* _M_first;
 };
+
+#pragma warning(pop)
 
 } // inline namespace concurrency_v1
 } // namespace experimental

@@ -107,7 +107,7 @@ inline void execution_context::service::notify_fork(fork_event)
 }
 
 class service_already_exists
-  : logic_error
+  : public logic_error
 {
 public:
   service_already_exists()

@@ -18,6 +18,25 @@ namespace std {
 namespace experimental {
 inline namespace concurrency_v1 {
 
+template <class _Func, class... _CompletionTokens>
+typename __invoke_with_token<_CompletionTokens...>::_Result
+    dispatch(_CompletionTokens&&... __tokens)
+{
+    static_assert(sizeof...(_CompletionTokens) > 0,
+        "dispatch() must be called with one or more completion tokens");
+
+    typedef __passive_invoker<_Func, _CompletionTokens...> _Invoker;
+
+    _Invoker __head(__tokens...);
+    async_result<_Invoker> __result(__head);
+
+    auto __completion_executor(get_associated_executor(__head));
+    auto __completion_allocator(get_associated_allocator(__head));
+    __completion_executor.dispatch(std::move(__head), __completion_allocator);
+
+    return __result.get();
+}
+
 template <class... _CompletionTokens>
 typename __invoke_with_token<_CompletionTokens...>::_Result
   dispatch(_CompletionTokens&&... __tokens)

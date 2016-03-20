@@ -1,0 +1,255 @@
+
+.Files  = {
+	"dispatch_after_int_tp",
+	"dispatch_after_void_tp",
+	"dispatch_at_int_tp",
+	"dispatch_at_void_tp",
+	"dispatch_int_tp",
+	"dispatch_void_tp",
+	"get_associated_executor_tp",
+	"make_work_tp",
+	"nested_dispatch_tp",
+	"post_int_tp",
+	"post_void_tp",
+	"wrap_dispatch_int_tp",
+	"wrap_dispatch_void_tp",
+	"wrap_post_int_tp",
+	"wrap_post_void_tp"
+}
+
+ForEach ( .File in .Files)
+{
+	^ProjectList_Tests_Thread_Pool + { '$File$-proj'}
+}
+
+.ProjectName = "ThreadPool"
+.ProjectPath = 'src\tests\thread_pool'
+
+ForEach( .File in .Files)
+{
+
+	// Visual Studio Project Generation
+	//--------------------------------------------------------------------------
+	VCXProject( '$File$-proj' )
+	{
+		.ProjectOutput				= 'tmp/VisualStudio/Projects/$File$.vcxproj'
+		.ProjectBasePath			= '$ProjectPath$\'
+		.ProjectFiles 				= { '$ProjectPath$\$File$.cpp',
+										'$ProjectPath$\fbuild.bff'
+									  }
+		.LocalDebuggerCommand		= '^$(SolutionDir)..\^$(Configuration)\$ProjectPath$\$File$.exe'
+		.LocalDebuggerWorkingDirectory = '^$(SolutionDir)..\..\src'
+	}
+
+    // Unity
+    //--------------------------------------------------------------------------
+    {
+        // Common options
+		.UnityInputFiles			= { '$ProjectPath$\$File$.cpp' }
+        .UnityOutputPath            = '$OutputBase$\Unity\$ProjectPath$\'
+
+        // Windows
+        Unity( '$File$-Unity-Windows' )
+        {
+        }
+
+        // Linux
+        Unity( '$File$-Unity-Linux' )
+        {
+        }
+
+        // OSX
+        Unity( '$File$-Unity-OSX' )
+        {
+        }
+    }       
+
+	// Windows (MSVC)
+	//--------------------------------------------------------------------------
+	ForEach( .Config in .Configs_Windows_MSVC )
+	{
+		Using( .Config )
+		.OutputBase + '\$Platform$-$Config$'
+		.OutputBinBase + '\$Platform$-$Config$'
+		.OutputLibBase + '\$Platform$-$Config$'
+
+		// Objects
+		ObjectList( '$File$-Lib-$Platform$-$Config$' )
+		{
+			// Input (Unity)
+			.CompilerInputUnity			= '$File$-Unity-Windows'
+
+			// Output
+			.CompilerOutputPath			= '$OutputBase$\$ProjectPath$\'
+ 			.LibrarianOutput 			= '$OutputBase$\$ProjectPath$\$File$.lib'
+		}
+
+		// Executable
+		Executable( '$File$-Exe-$Platform$-$Config$' )
+		{
+			.Libraries					= 	{ 
+											  '$File$-Lib-$Platform$-$Config$'
+											}
+
+			.LinkerOutput				= '$OutputBase$\$ProjectPath$\$File$.exe'
+			.LinkerOptions				+ ' /SUBSYSTEM:CONSOLE'
+		}
+
+		Copy( '$File$-CopyExe-$Platform$-$Config$' )
+		{
+		  .Source   = { '$OutputBase$\$ProjectPath$\$File$.exe',
+						'$OutputBase$\$ProjectPath$\$File$.pdb'
+					  }
+		  .Dest     = '$OutputBinBase$\'
+		  .PreBuildDependencies = '$File$-Exe-$Platform$-$Config$'
+		}
+
+		Copy( '$File$-CopyLib-$Platform$-$Config$' )
+		{
+		  .Source   = '$OutputBase$\$ProjectPath$\$File$.lib'
+		  .Dest     = '$OutputLibBase$\'
+		}
+
+		Alias( '$File$-$Platform$-$Config$' )
+		{ 
+			.Targets = { '$File$-Exe-$Platform$-$Config$',
+						 '$File$-CopyExe-$Platform$-$Config$'
+					   }
+		}
+	}
+
+	// Windows (Clang)
+	//--------------------------------------------------------------------------
+	ForEach( .Config in .Configs_Windows_Clang )
+	{
+		Using( .Config )
+		.OutputBase + '\$Platform$-$Config$'
+		.OutputBinBase + '\$Platform$-$Config$'
+		.OutputLibBase + '\$Platform$-$Config$'
+
+		// Static Library
+		ObjectList( '$File$-Lib-$Platform$-$Config$' )
+		{
+			// Input (Unity)
+			.CompilerInputUnity			= '$File$-Unity-Windows'
+
+			// Output
+			.CompilerOutputPath			= '$OutputBase$\$ProjectPath$\'
+ 			.LibrarianOutput 			= '$OutputBase$\$ProjectPath$\$File$.lib'
+		}
+		// Executable
+		Executable( '$File$-Exe-$Platform$-$Config$' )
+		{
+			.Libraries					= 	{ 
+											  '$File$-Lib-$Platform$-$Config$'
+											}
+
+			.LinkerOutput				= '$OutputBase$\$ProjectPath$\$File$.exe'
+			.LinkerOptions				+ ' /SUBSYSTEM:CONSOLE'
+		}
+
+		Copy( '$File$-CopyExe-$Platform$-$Config$' )
+		{
+		  .Source   = { '$OutputBase$\$ProjectPath$\$File$.exe',
+						'$OutputBase$\$ProjectPath$\$File$.pdb'
+					  }
+		  .Dest     = '$OutputBinBase$\'
+		  .PreBuildDependencies = '$File$-Exe-$Platform$-$Config$' 
+		}
+
+		Copy( '$File$-CopyLib-$Platform$-$Config$' )
+		{
+		  .Source   = '$OutputBase$\$ProjectPath$\$File$.lib'
+		  .Dest     = '$OutputLibBase$\'
+		}
+
+		Alias( '$File$-$Platform$-$Config$' )
+		{ 
+			.Targets = { '$File$-Exe-$Platform$-$Config$',
+						 '$File$-CopyExe-$Platform$-$Config$'
+					   }
+		}
+	}
+
+    // Linux (GCC)
+    //--------------------------------------------------------------------------
+    // ForEach( .Config in .Configs_Linux_GCC )
+    // {
+        // Using( .Config )
+        // .OutputBase + '\$Platform$-$Config$'
+
+        //Static Library
+        // Library( '$File$-Lib-$Platform$-$Config$' )
+        // {
+            //Input (Unity)
+            // .CompilerInputUnity         = '$File$-Unity-Linux'
+
+            //Output
+            // .CompilerOutputPath         = '$OutputBase$\$ProjectPath$\'
+            // .LibrarianOutput            = '$OutputBase$\$ProjectPath$\$File$.a'
+        // }
+
+        //Executable
+        // Executable( '$File$-Exe-$Platform$-$Config$' )
+        // {
+            // .Libraries                  = { 
+                                          // }
+            // .LinkerOutput               = '$OutputBase$\Tools\FBuild\FBuildApp\fbuild'
+            // .LinkerOptions              + ' -pthread'
+        // }
+        // Alias( '$File$-$Platform$-$Config$' ) { .Targets = '$File$-Exe-$Platform$-$Config$' }
+    // }	
+
+    // OSX (Clang)
+    //--------------------------------------------------------------------------
+    // ForEach( .Config in .Configs_OSX_Clang )
+    // {
+        // Using( .Config )
+        // .OutputBase + '\$Platform$-$Config$'
+
+        //Static Library
+        // Library( '$File$-Lib-$Platform$-$Config$' )
+        // {
+            //Input (Unity)
+            // .CompilerInputUnity         = '$File$-Unity-OSX'
+
+            //Output
+            // .CompilerOutputPath         = '$OutputBase$\$ProjectPath$\'
+            // .LibrarianOutput            = '$OutputBase$\$ProjectPath$\$File$.a'
+        // }
+
+        //Executable
+        // Executable( '$File$-Exe-$Platform$-$Config$' )
+        // {
+            // .Libraries                  = { 
+                                            // 'FBuildApp-Lib-$Platform$-$Config$',
+                                            // 'FBuildCore-Lib-$Platform$-$Config$',
+                                            // 'Core-Lib-$Platform$-$Config$',
+                                            // 'LZ4-Lib-$Platform$-$Config$' 
+                                          // }
+            // .LinkerOutput               = '$OutputBase$\Tools\FBuild\FBuildApp\FBuild'
+        // }
+
+        // Alias( '$File$-$Platform$-$Config$' ) { .Targets = '$File$-Exe-$Platform$-$Config$' }
+    // }	
+
+	// Aliases
+	//--------------------------------------------------------------------------
+	// Per-Config
+	Alias( '$File$-Debug' )		{ .Targets = { '$File$-X86-Debug',   '$File$-X64-Debug', '$File$-X86Clang-Debug' } }
+	Alias( '$File$-Profile' )	{ .Targets = { '$File$-X86-Profile', '$File$-X64-Profile' } }
+	Alias( '$File$-Release' )	{ .Targets = { '$File$-X86-Release', '$File$-X64-Release', '$File$-X86Clang-Release' } }
+
+	// Per-Platform
+	Alias( '$File$-X86' )		{ .Targets = { '$File$-X86-Debug', '$File$-X86-Release', '$File$-X86-Profile' } }
+	Alias( '$File$-X64' )		{ .Targets = { '$File$-X64-Debug', '$File$-X64-Release', '$File$-X64-Profile' } }
+	Alias( '$File$-X86Clang' )	{ .Targets = { '$File$-X86Clang-Debug', '$File$-X86Clang-Release' } }
+    Alias( '$File$-x64Linux' )   { .Targets = { '$File$-X64Linux-Debug', 	'$File$-X64Linux-Release', '$File$-X64Linux-Profile' } }
+    Alias( '$File$-x64OSX' )   	{ .Targets = { '$File$-X64OSX-Debug', 	'$File$-X64OSX-Release',   '$File$-X64OSX-Profile' } }
+
+	// All
+	Alias( '$File$' )
+	{
+		.Targets = { '$File$-Debug', '$File$-Profile', '$File$-Release' }
+	}
+}

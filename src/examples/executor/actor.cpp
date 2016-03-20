@@ -1,11 +1,16 @@
+#include <Intrin.h>
+#include <exception>
+#include <typeinfo>
+
 #include <condition_variable>
 #include <deque>
 #include <experimental/executor>
 #include <experimental/strand>
 #include <memory>
 #include <mutex>
-#include <typeinfo>
 #include <vector>
+
+#include <boost/format.hpp>
 
 using std::experimental::defer;
 using std::experimental::executor;
@@ -17,10 +22,17 @@ using std::experimental::system_executor;
 // A tiny actor framework
 // ~~~~~~~~~~~~~~~~~~~~~~
 
-class actor;
+#ifdef DEBUG
+class _actor;
+typedef _actor actor;
+#else
+class _debug_actor;
+typedef _debug_actor actor;
+#endif
+
+typedef actor* actor_address;
 
 // Used to identify the sender and recipient of messages.
-typedef actor* actor_address;
 
 // Base class for all registered message handlers.
 class message_handler_base
@@ -76,10 +88,10 @@ private:
 };
 
 // Base class for all actors.
-class actor
+class _actor
 {
 public:
-  virtual ~actor()
+  virtual ~_actor()
   {
   }
 
@@ -103,9 +115,10 @@ public:
 
 protected:
   // Construct the actor to use the specified executor for all message handlers.
-  actor(executor e)
+    _actor(executor e, std::string&& _string)
     : executor_(std::move(e))
   {
+      std::string s(_string);
   }
 
   // Register a handler for a specific message type. Duplicates are permitted.
@@ -154,7 +167,8 @@ private:
   void call_handler(Message msg, actor_address from)
   {
     const std::type_info& message_id = typeid(Message);
-    for (auto& h: handlers_)
+    std::vector<std::shared_ptr<message_handler_base>> handlers = handlers_;
+    for (auto& h: handlers)
     {
       if (h->message_id() == message_id)
       {
@@ -172,13 +186,33 @@ private:
   std::vector<std::shared_ptr<message_handler_base>> handlers_;
 };
 
+class _debug_actor : public _actor
+{
+public:
+
+    virtual ~_debug_actor()
+    {
+
+    }
+
+protected:
+        // Construct the actor to use the specified executor for all message handlers.
+        _debug_actor(executor e, std::string&& _string)
+            : _actor(std::move(e), std::move(_string)),
+              name_(_string)
+        {
+        }
+private:
+    std::string name_;
+};
+
 // A concrete actor that allows synchronous message retrieval.
 template <class Message>
 class receiver : public actor
 {
 public:
   receiver()
-    : actor(system_executor())
+    : actor(system_executor(),"receiver")
   {
     register_handler(&receiver::message_handler);
   }
@@ -217,8 +251,10 @@ using std::experimental::thread_pool;
 class member : public actor
 {
 public:
-  explicit member(executor e)
-    : actor(std::move(e))
+  explicit member(executor e, std::string&& _name)
+    : actor(std::move(e), std::move(_name)),
+	  next_(nullptr),
+	  caller_(nullptr)
   {
     register_handler(&member::init_handler);
   }
@@ -253,9 +289,9 @@ private:
 
 int main()
 {
-  const std::size_t num_threads = 16;
+  const std::size_t num_threads = 12;
   const int num_hops = 50000000;
-  const std::size_t num_actors = 503;
+  const std::size_t num_actors = 15;
   const int token_value = (num_hops + num_actors - 1) / num_actors;
   const std::size_t actors_per_thread = num_actors / num_threads;
 
@@ -266,7 +302,7 @@ int main()
 
   // Create the member actors.
   for (std::size_t i = 0; i < num_actors; ++i)
-    members[i] = std::make_shared<member>(pools[(i / actors_per_thread) % num_threads].get_executor());
+    members[i] = std::make_shared<member>(pools[(i / actors_per_thread) % num_threads].get_executor(), boost::str(boost::format("member %u, pool %u") % i % ((i / actors_per_thread) % num_threads)) );
 
   // Initialise the actors by passing each one the address of the next actor in the ring.
   for (std::size_t i = num_actors, next_i = 0; i > 0; next_i = --i)
