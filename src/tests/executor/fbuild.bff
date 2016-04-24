@@ -26,6 +26,8 @@
 ForEach ( .File in .Files)
 {
 	^ProjectList_Tests_Executor + { '$File$-proj'}
+    ^ProjectList_All + { '$File$-proj' }
+    ^Projects_All + { '$File$'}
 }
 
 .ProjectName = "Executor"
@@ -177,6 +179,59 @@ ForEach( .File in .Files)
 		}
 	}
 
+   // Windows (GCC)
+    //--------------------------------------------------------------------------
+    ForEach(.Config in.Configs_Windows_GCC)
+    {
+        Using(.Config)
+            .OutputBase + '\$Platform$-$Config$'
+            .OutputBinBase + '\$Platform$-$Config$'
+            .OutputLibBase + '\$Platform$-$Config$'
+
+            // Objects
+            ObjectList('$File$-Lib-$Platform$-$Config$')
+        {
+            // Input (Unity)
+            .CompilerInputUnity = '$File$-Unity-Windows'
+
+                // Output
+                .CompilerOutputPath = '$OutputBase$\$ProjectPath$\'
+                .LibrarianOutput = '$OutputBase$\$ProjectPath$\$File$.lib'
+        }
+
+        // Executable
+        Executable('$File$-Exe-$Platform$-$Config$')
+        {
+            .Libraries = {
+                '$File$-Lib-$Platform$-$Config$'
+            }
+
+                .LinkerOutput = '$OutputBase$\$ProjectPath$\$File$.exe'
+        }
+
+        Copy('$File$-CopyExe-$Platform$-$Config$')
+        {
+            .Source = { '$OutputBase$\$ProjectPath$\$File$.exe'
+            }
+                .Dest = '$OutputBinBase$\'
+                .PreBuildDependencies = '$File$-Exe-$Platform$-$Config$'
+        }
+
+        Copy('$File$-CopyLib-$Platform$-$Config$')
+        {
+            .Source = '$OutputBase$\$ProjectPath$\$File$.lib'
+                .Dest = '$OutputLibBase$\'
+        }
+
+        Alias('$File$-$Platform$-$Config$')
+        {
+            .Targets = { '$File$-Exe-$Platform$-$Config$',
+                '$File$-CopyExe-$Platform$-$Config$'
+            }
+        }
+    }
+	
+	
     // Linux (GCC)
     //--------------------------------------------------------------------------
     // ForEach( .Config in .Configs_Linux_GCC )

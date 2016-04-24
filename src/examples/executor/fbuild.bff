@@ -33,7 +33,9 @@
 
 ForEach ( .File in .Files)
 {
-	^ProjectList_Examples_Executor + { '$File$-proj'}
+	^ProjectList_Examples_Executor + { '$File$-proj' }
+    ^ProjectList_All + { '$File$-proj' }
+    ^Projects_All + { '$File$'}
 }
 
 .ProjectName = "executor"
@@ -185,6 +187,58 @@ ForEach( .File in .Files)
 		}
 	}
 
+    // Windows (GCC)
+    //--------------------------------------------------------------------------
+    ForEach(.Config in.Configs_Windows_GCC)
+    {
+        Using(.Config)
+            .OutputBase + '\$Platform$-$Config$'
+            .OutputBinBase + '\$Platform$-$Config$'
+            .OutputLibBase + '\$Platform$-$Config$'
+
+            // Objects
+            ObjectList('$File$-Lib-$Platform$-$Config$')
+        {
+            // Input (Unity)
+            .CompilerInputUnity = '$File$-Unity-Windows'
+
+                // Output
+                .CompilerOutputPath = '$OutputBase$\$ProjectPath$\'
+                .LibrarianOutput = '$OutputBase$\$ProjectPath$\$File$.lib'
+        }
+
+        // Executable
+        Executable('$File$-Exe-$Platform$-$Config$')
+        {
+            .Libraries = {
+                '$File$-Lib-$Platform$-$Config$'
+            }
+
+                .LinkerOutput = '$OutputBase$\$ProjectPath$\$File$.exe'
+        }
+
+        Copy('$File$-CopyExe-$Platform$-$Config$')
+        {
+            .Source = { '$OutputBase$\$ProjectPath$\$File$.exe'
+            }
+                .Dest = '$OutputBinBase$\'
+                .PreBuildDependencies = '$File$-Exe-$Platform$-$Config$'
+        }
+
+        Copy('$File$-CopyLib-$Platform$-$Config$')
+        {
+            .Source = '$OutputBase$\$ProjectPath$\$File$.lib'
+                .Dest = '$OutputLibBase$\'
+        }
+
+        Alias('$File$-$Platform$-$Config$')
+        {
+            .Targets = { '$File$-Exe-$Platform$-$Config$',
+                '$File$-CopyExe-$Platform$-$Config$'
+            }
+        }
+    }
+
     // Linux (GCC)
     //--------------------------------------------------------------------------
     // ForEach( .Config in .Configs_Linux_GCC )
@@ -250,16 +304,17 @@ ForEach( .File in .Files)
 	// Aliases
 	//--------------------------------------------------------------------------
 	// Per-Config
-	Alias( '$File$-Debug' )		{ .Targets = { '$File$-X86-Debug',   '$File$-X64-Debug', '$File$-X86Clang-Debug' } }
-	Alias( '$File$-Profile' )	{ .Targets = { '$File$-X86-Profile', '$File$-X64-Profile' } }
-	Alias( '$File$-Release' )	{ .Targets = { '$File$-X86-Release', '$File$-X64-Release', '$File$-X86Clang-Release' } }
+	Alias( '$File$-Debug' )		{ .Targets = { '$File$-X86-Debug',   '$File$-X64-Debug',   '$File$-X86Clang-Debug',   '$File$-X64GCC-Debug'   } }
+	Alias( '$File$-Profile' )	{ .Targets = { '$File$-X86-Profile', '$File$-X64-Profile',                            '$File$-X64GCC-Profile' } }
+	Alias( '$File$-Release' )	{ .Targets = { '$File$-X86-Release', '$File$-X64-Release', '$File$-X86Clang-Release', '$File$-X64GCC-Release' } }
 
 	// Per-Platform
-	Alias( '$File$-X86' )		{ .Targets = { '$File$-X86-Debug', '$File$-X86-Release', '$File$-X86-Profile' } }
-	Alias( '$File$-X64' )		{ .Targets = { '$File$-X64-Debug', '$File$-X64-Release', '$File$-X64-Profile' } }
-	Alias( '$File$-X86Clang' )	{ .Targets = { '$File$-X86Clang-Debug', '$File$-X86Clang-Release' } }
-    Alias( '$File$-x64Linux' )   { .Targets = { '$File$-X64Linux-Debug', 	'$File$-X64Linux-Release', '$File$-X64Linux-Profile' } }
-    Alias( '$File$-x64OSX' )   	{ .Targets = { '$File$-X64OSX-Debug', 	'$File$-X64OSX-Release',   '$File$-X64OSX-Profile' } }
+	Alias( '$File$-X86' )		{ .Targets = { '$File$-X86-Debug',      '$File$-X86-Release',      '$File$-X86-Profile'      } }
+	Alias( '$File$-X64' )		{ .Targets = { '$File$-X64-Debug',      '$File$-X64-Release',      '$File$-X64-Profile'      } }
+    Alias( '$File$-X64GCC')     { .Targets = { '$File$-X64GCC-Debug',   '$File$-X64GCC-Release',   '$File$-X64GCC-Profile'   } }
+    Alias( '$File$-X86Clang' )	{ .Targets = { '$File$-X86Clang-Debug', '$File$-X86Clang-Release'                            } }
+    Alias( '$File$-x64Linux' )  { .Targets = { '$File$-X64Linux-Debug', '$File$-X64Linux-Release', '$File$-X64Linux-Profile' } }
+    Alias( '$File$-x64OSX' )   	{ .Targets = { '$File$-X64OSX-Debug', 	'$File$-X64OSX-Release',   '$File$-X64OSX-Profile'   } }
 
 	// All
 	Alias( '$File$' )

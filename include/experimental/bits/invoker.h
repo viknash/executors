@@ -336,7 +336,7 @@ struct __invoke_with_execution_context
 
 template <class yield_context, class... _CompletionTokens>
 struct __invoke_with_yield_context
-    : conditional<__is_execution_context<_ExecutionContext>::value,
+    : conditional<__is_execution_context<yield_context>::value,
     __invoke_result<_CompletionTokens...>, __invoke_no_result>::type
 {
 };

@@ -41,7 +41,7 @@ public:
 
     error_code __ec;
     if (this->_M_result == __channel_op::_Result::__operation_canceled)
-      __ec = make_error_code(errc::operation_canceled);
+      __ec = make_error_code(/*errc::operation_canceled*/ (std::errc)ECANCELED);
     else if (this->_M_result == __channel_op::_Result::__broken_pipe)
       __ec = make_error_code(errc::broken_pipe);
 

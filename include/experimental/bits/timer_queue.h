@@ -174,7 +174,7 @@ public:
     {
       while (__wait_op_base* __op = (__num != __max) ? __timer._M_ops._Front() : nullptr)
       {
-        __op->_M_ec = make_error_code(errc::operation_canceled);
+        __op->_M_ec = make_error_code((std::errc)ECANCELED/*errc::operation_canceled*/);
         __timer._M_ops._Pop();
         __ops._Push(__op);
         ++__num;

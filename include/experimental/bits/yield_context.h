@@ -364,7 +364,7 @@ template <class _T>
 struct __is_yieldable<_T,
   typename enable_if<is_convertible<__last_argument_t<__signature_t<_T>>,
     yield_context>::value>::type> : true_type {};
-/*
+
 template <class _Func, class _R, class... _Args>
 struct handler_type<_Func, _R(_Args...),
   typename enable_if<__is_yieldable<typename decay<_Func>::type>::value
@@ -375,7 +375,7 @@ struct handler_type<_Func, _R(_Args...),
   typedef associated_executor_t<_YieldContext> _Executor;
   typedef __yield_context_launcher<_Executor, _DecayFunc> type;
 };
-*/
+
 template <class _Executor, class _R, class... _Args>
 struct handler_type<basic_yield_context<_Executor>, _R(_Args...)>
 {

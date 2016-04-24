@@ -19,7 +19,7 @@ int main()
     {
       for (int i = 0; i < 10; ++i)
       {
-        //dispatch_after(std::chrono::seconds(1), yield);
+        dispatch_after(std::chrono::seconds(1), yield);
         std::cout << i << std::endl;
       }
     }, use_future).get();
