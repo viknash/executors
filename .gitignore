@@ -345,3 +345,4 @@ test-driver
 /tmp/x86-Debug/src/examples/executor/post_2.nativecodeanalysis.xml
 /vc140.idb
 VisualStudio
+/profile.json
